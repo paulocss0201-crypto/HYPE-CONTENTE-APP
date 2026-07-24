@@ -11,5 +11,6 @@ export { DesignVersionHistoryModal } from "./DesignVersionHistoryModal";
 export { DesignScoreModal } from "./DesignScoreModal";
 export { DesignCommandBar } from "./DesignCommandBar";
 export { ShortcutsModal } from "./ShortcutsModal";
+export { GridControls } from "./GridControls";
 export { useDesignHistory } from "./useDesignHistory";
 export * from "./toolTypes";

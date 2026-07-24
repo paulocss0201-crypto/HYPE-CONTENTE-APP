@@ -8,6 +8,18 @@ export const EDIT_MODES: { key: EditMode; label: string }[] = [
   { key: "ia", label: "IA" },
 ];
 
+export type GridMode = "none" | "2" | "3" | "4" | "6" | "modular" | "editorial";
+
+export const GRID_MODES: { key: GridMode; label: string }[] = [
+  { key: "none", label: "Nenhuma" },
+  { key: "2", label: "2 colunas" },
+  { key: "3", label: "3 colunas" },
+  { key: "4", label: "4 colunas" },
+  { key: "6", label: "6 colunas" },
+  { key: "modular", label: "Modular" },
+  { key: "editorial", label: "Editorial" },
+];
+
 export interface ToolMeta {
   key: ToolKey;
   label: string;

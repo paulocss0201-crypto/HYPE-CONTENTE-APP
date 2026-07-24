@@ -22,7 +22,7 @@ export function DesignCommandBar({ onCommand }: { onCommand: (raw: string) => vo
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-2 rounded-full border border-ink-600 bg-ink-850/80 backdrop-blur px-3.5 py-2 w-[340px] focus-within:border-ink-300 transition-colors">
+      <div className="flex items-center gap-2 rounded-full border border-ink-600 bg-ink-850/80 backdrop-blur px-3.5 py-2 w-[340px] focus-within:border-ink-300 focus-within:shadow-[0_0_16px_rgba(255,255,255,0.12)] transition-all">
         <Wand2 className="size-4 text-ink-300 shrink-0" />
         <input
           value={value}

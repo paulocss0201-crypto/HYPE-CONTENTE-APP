@@ -20,10 +20,11 @@ import {
   DesignScoreModal,
   DesignCommandBar,
   ShortcutsModal,
+  GridControls,
   useDesignHistory,
 } from "@/components/design";
 import type { ExportKind } from "@/components/design";
-import type { ToolKey, EditMode } from "@/components/design/toolTypes";
+import type { ToolKey, EditMode, GridMode } from "@/components/design/toolTypes";
 import { EDIT_MODES } from "@/components/design/toolTypes";
 import { TemplatesPanel, TextToolPanel, ElementsToolPanel, BackgroundsToolPanel, UploadsToolPanel, BrandKitPanel, ImagesToolPanel, AIToolPanel } from "@/components/design/panels";
 import {
@@ -87,6 +88,9 @@ export function DesignStudio() {
   const [scoreResult, setScoreResult] = useState<DesignScoreResult | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>("avancado");
+  const [gridMode, setGridMode] = useState<GridMode>("none");
+  const [gridMargin, setGridMargin] = useState(32);
+  const [showSafeArea, setShowSafeArea] = useState(false);
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -583,7 +587,7 @@ export function DesignStudio() {
         <LeftRail active={leftPanel} onSelect={(t) => setLeftPanel(leftPanel === t ? null : t)} />
 
         {leftPanel && (
-          <div className="hidden md:block w-[300px] shrink-0 border-r border-ink-750 bg-ink-950 overflow-y-auto">
+          <div className="hidden md:block w-[300px] shrink-0 border-r border-ink-750 bg-ink-950/90 backdrop-blur-md overflow-y-auto">
             {leftPanel === "templates" && <TemplatesPanel format={design.format} onApply={handleApplyTemplate} />}
             {leftPanel === "text" && <TextToolPanel onAdd={addElement} />}
             {(leftPanel === "elements" || leftPanel === "shapes" || leftPanel === "icons") && (
@@ -618,7 +622,7 @@ export function DesignStudio() {
         )}
 
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-ink-750 gap-3">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-ink-750 bg-ink-950/80 backdrop-blur-md gap-3">
             <div className="flex items-center gap-2.5 shrink-0">
               <div className="flex items-center gap-1.5">
                 <button onClick={() => setZoom((z) => Math.max(0.15, z - 0.05))} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800">
@@ -637,6 +641,14 @@ export function DesignStudio() {
                   </span>
                 </Tooltip>
               )}
+              <GridControls
+                mode={gridMode}
+                onModeChange={setGridMode}
+                margin={gridMargin}
+                onMarginChange={setGridMargin}
+                safeArea={showSafeArea}
+                onSafeAreaChange={setShowSafeArea}
+              />
               <div className="hidden xl:flex items-center rounded-full border border-ink-700 p-0.5">
                 {EDIT_MODES.map((m) => (
                   <button
@@ -647,7 +659,7 @@ export function DesignStudio() {
                     }}
                     className={cn(
                       "text-xs px-2.5 py-1 rounded-full transition-colors",
-                      editMode === m.key ? "bg-white text-ink-950 font-medium" : "text-ink-300 hover:text-white"
+                      editMode === m.key ? "bg-white text-ink-950 font-medium shadow-[0_0_12px_rgba(255,255,255,0.25)]" : "text-ink-300 hover:text-white"
                     )}
                   >
                     {m.label}
@@ -674,7 +686,7 @@ export function DesignStudio() {
           </div>
 
           {isCarousel && (
-            <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 border-b border-ink-750">
+            <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 border-b border-ink-750 bg-ink-950/80 backdrop-blur-md">
               <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("layout")}>
                 Aplicar layout em todos
               </Button>
@@ -706,6 +718,9 @@ export function DesignStudio() {
                 stageRef={(node) => {
                   stageRef.current = node;
                 }}
+                gridMode={gridMode}
+                gridMargin={gridMargin}
+                showSafeArea={showSafeArea}
               />
             )}
           </div>
@@ -724,7 +739,7 @@ export function DesignStudio() {
           )}
         </div>
 
-        <div className="hidden lg:block w-[280px] shrink-0 border-l border-ink-750 bg-ink-950 overflow-y-auto">
+        <div className="hidden lg:block w-[280px] shrink-0 border-l border-ink-750 bg-ink-950/90 backdrop-blur-md overflow-y-auto">
           {slide && (
             <RightPropertiesPanel
               slide={slide}

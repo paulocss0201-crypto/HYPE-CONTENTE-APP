@@ -41,7 +41,7 @@ export function TopBar({
   const [draft, setDraft] = useState(name);
 
   return (
-    <div className="flex items-center gap-3 h-14 px-3 sm:px-4 border-b border-ink-750 bg-ink-950 shrink-0">
+    <div className="flex items-center gap-3 h-14 px-3 sm:px-4 border-b border-ink-750 bg-ink-950/90 backdrop-blur-md shrink-0">
       <button onClick={() => navigate(backTo)} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800 transition-colors shrink-0">
         <ChevronLeft className="size-4" />
       </button>

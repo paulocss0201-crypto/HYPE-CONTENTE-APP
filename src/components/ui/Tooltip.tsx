@@ -14,7 +14,7 @@ export function Tooltip({ content, children, className }: { content: string; chi
     >
       {children}
       {show && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg bg-ink-700 border border-ink-600 px-2.5 py-1 text-xs text-white shadow-lg z-20 animate-fade-in">
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg bg-ink-800/95 backdrop-blur-sm border border-ink-600 px-2.5 py-1 text-xs text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)] z-20 animate-fade-in">
           {content}
         </span>
       )}

@@ -8,6 +8,8 @@ import { ShapeNode } from "./ShapeNode";
 import { IconNode } from "./IconNode";
 import { computeSnap } from "./snapping";
 import type { GuideLine } from "./snapping";
+import { GridOverlay } from "./GridOverlay";
+import type { GridMode } from "../toolTypes";
 
 export function DesignCanvas({
   slide,
@@ -21,6 +23,9 @@ export function DesignCanvas({
   onStartEditText,
   onFinishEditText,
   stageRef,
+  gridMode = "none",
+  gridMargin = 32,
+  showSafeArea = false,
 }: {
   slide: DesignSlide;
   format: DesignFormatSpec;
@@ -33,6 +38,9 @@ export function DesignCanvas({
   onStartEditText: (id: string) => void;
   onFinishEditText: (id: string, text: string) => void;
   stageRef?: (stage: Konva.Stage | null) => void;
+  gridMode?: GridMode;
+  gridMargin?: number;
+  showSafeArea?: boolean;
 }) {
   const nodeRefs = useRef<Map<string, Konva.Node>>(new Map());
   const transformerRef = useRef<Konva.Transformer | null>(null);
@@ -175,6 +183,8 @@ export function DesignCanvas({
           ))}
         </Layer>
       </Stage>
+
+      <GridOverlay width={format.width} height={format.height} scale={scale} mode={gridMode} margin={gridMargin} safeArea={showSafeArea} />
 
       {editingEl && (
         <textarea
