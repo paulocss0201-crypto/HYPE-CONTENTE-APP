@@ -17,6 +17,8 @@ import {
   PromptAssistantModal,
   ExportModal,
   DesignVersionHistoryModal,
+  DesignScoreModal,
+  DesignCommandBar,
   useDesignHistory,
 } from "@/components/design";
 import type { ExportKind } from "@/components/design";
@@ -30,14 +32,24 @@ import {
   extractSlideTexts,
   emptySlide,
   withZIndex,
+  applyTextAIAction,
+  parseDesignCommand,
+  analyzeDesignScore,
+  improveHierarchy,
+  adaptSlideToFormat,
+  reduceDensity,
+  computeDensity,
+  contrastRatio,
+  bestContrastColor,
+  MIN_SAFE_CONTRAST,
 } from "@/lib/design-ai";
-import type { DesignTemplate } from "@/lib/design-ai";
+import type { DesignTemplate, DesignScoreResult } from "@/lib/design-ai";
 import { validateDesign } from "@/lib/design-ai/validateDesign";
 import { downloadDataUrl, exportSlidesAsPdf, exportSlidesAsZip } from "@/lib/design-ai/exportDesign";
 import { ScheduleModal } from "@/components/content";
-import { EmptyState, Card, Button } from "@/components/ui";
-import { uid } from "@/lib/utils";
-import { FileQuestion, ZoomIn, ZoomOut, CheckSquare2 } from "lucide-react";
+import { EmptyState, Card, Button, Tooltip } from "@/components/ui";
+import { uid, cn } from "@/lib/utils";
+import { FileQuestion, ZoomIn, ZoomOut, CheckSquare2, Gauge } from "lucide-react";
 
 export function DesignStudio() {
   const { id } = useParams();
@@ -69,6 +81,8 @@ export function DesignStudio() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [generatingDesign, setGeneratingDesign] = useState(false);
+  const [scoreOpen, setScoreOpen] = useState(false);
+  const [scoreResult, setScoreResult] = useState<DesignScoreResult | null>(null);
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -289,6 +303,115 @@ export function DesignStudio() {
     pushToast(`Aplicado a todos os slides`, "success");
   }
 
+  function handleAnalyzeDesign() {
+    if (!slide) return;
+    const result = analyzeDesignScore(slide, brandKit.colors, brandKit.fonts);
+    setScoreResult(result);
+    setScoreOpen(true);
+  }
+
+  function handleAutoFixFromScore() {
+    if (!slide) return;
+    const hierarchyFixed = improveHierarchy(slide);
+    const contrastFixed = {
+      ...hierarchyFixed,
+      elements: hierarchyFixed.elements.map((e) =>
+        e.kind === "text" && contrastRatio(e.color, hierarchyFixed.background) < MIN_SAFE_CONTRAST ? { ...e, color: bestContrastColor(hierarchyFixed.background) } : e
+      ),
+    };
+    setSlideAt(activeSlideIndex, contrastFixed);
+    history.commit();
+    setScoreOpen(false);
+    pushToast("Ajustes automáticos aplicados", "success");
+  }
+
+  function handleDesignCommand(raw: string) {
+    if (!slide) return;
+    const action = parseDesignCommand(raw);
+    switch (action.type) {
+      case "background":
+        handleSlideBackground(action.color);
+        pushToast("Fundo atualizado", "success");
+        break;
+      case "accent-color":
+        applyAtomic((slides) =>
+          slides.map((s, i) => (i === activeSlideIndex ? { ...s, elements: s.elements.map((e) => (e.kind === "shape" && e.fill !== "transparent" ? { ...e, fill: action.color } : e)) } : s))
+        );
+        pushToast("Cor de destaque atualizada", "success");
+        break;
+      case "increase-title":
+      case "decrease-title": {
+        const texts = slide.elements.filter((e): e is Extract<DesignElement, { kind: "text" }> => e.kind === "text");
+        const title = [...texts].sort((a, b) => b.fontSize - a.fontSize)[0];
+        if (title) {
+          const delta = action.type === "increase-title" ? 12 : -12;
+          updateElementLive(title.id, { fontSize: Math.max(16, title.fontSize + delta) });
+          history.commit();
+        }
+        break;
+      }
+      case "center-all":
+        applyAtomic((slides) =>
+          slides.map((s, i) => (i === activeSlideIndex ? { ...s, elements: s.elements.map((e) => (e.kind === "text" ? { ...e, align: "center" } : e)) } : s))
+        );
+        pushToast("Textos centralizados", "success");
+        break;
+      case "reduce-text":
+        applyAtomic((slides) =>
+          slides.map((s, i) =>
+            i === activeSlideIndex
+              ? { ...s, elements: s.elements.map((e) => (e.kind === "text" ? { ...e, content: applyTextAIAction(e.content, "encurtar", Math.floor((e.width / e.fontSize) * 2)) } : e)) }
+              : s
+          )
+        );
+        pushToast("Texto reduzido", "success");
+        break;
+      case "simplify":
+        setSlideAt(activeSlideIndex, reduceDensity(slide));
+        history.commit();
+        pushToast("Design simplificado", "success");
+        break;
+      case "improve-hierarchy":
+        setSlideAt(activeSlideIndex, improveHierarchy(slide));
+        history.commit();
+        pushToast("Hierarquia visual melhorada", "success");
+        break;
+      case "modern-font":
+        applyAtomic((slides) =>
+          slides.map((s, i) => (i === activeSlideIndex ? { ...s, elements: s.elements.map((e) => (e.kind === "text" ? { ...e, fontFamily: "Space Grotesk" } : e)) } : s))
+        );
+        pushToast("Fonte moderna aplicada", "success");
+        break;
+      case "adapt-format": {
+        const targetFormat = DESIGN_FORMATS.find((f) => f.key === action.format);
+        if (targetFormat) {
+          setSlideAt(activeSlideIndex, adaptSlideToFormat(slide, targetFormat));
+          history.commit();
+          pushToast(`Slide adaptado para ${targetFormat.label}`, "success");
+        }
+        break;
+      }
+      case "generate-image":
+        setImageGenOpen(true);
+        break;
+      case "apply-brand":
+        handleApplyBrandIdentity();
+        break;
+      case "more-premium": {
+        const improved = improveHierarchy(slide);
+        setSlideAt(activeSlideIndex, { ...improved, elements: improved.elements.map((e) => (e.kind === "text" ? { ...e, letterSpacing: Math.max(e.letterSpacing, 0.5) } : e)) });
+        history.commit();
+        pushToast("Estilo mais premium aplicado", "success");
+        break;
+      }
+      case "analyze":
+        handleAnalyzeDesign();
+        break;
+      default:
+        pushToast("Não entendi esse comando. Tente outra forma de dizer.", "error");
+    }
+  }
+
   async function captureActiveStage(): Promise<string> {
     await new Promise((r) => setTimeout(r, 30));
     if (!stageRef.current) return "";
@@ -357,6 +480,9 @@ export function DesignStudio() {
 
   const warnings = validateDesign(history.slides, format);
   const isCarousel = design.format.startsWith("carrossel");
+  const density = slide ? computeDensity(slide) : null;
+  const DENSITY_LABEL: Record<string, string> = { limpo: "Limpo", equilibrado: "Equilibrado", carregado: "Carregado" };
+  const DENSITY_COLOR: Record<string, string> = { limpo: "text-success", equilibrado: "text-warning", carregado: "text-danger" };
 
   return (
     <div className="fixed inset-0 lg:left-64 flex flex-col bg-ink-950 z-10">
@@ -419,30 +545,35 @@ export function DesignStudio() {
         )}
 
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-ink-750">
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => setZoom((z) => Math.max(0.15, z - 0.05))} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800">
-                <ZoomOut className="size-4" />
-              </button>
-              <span className="text-xs text-ink-300 w-10 text-center">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(1.2, z + 0.05))} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800">
-                <ZoomIn className="size-4" />
-              </button>
-            </div>
-            {isCarousel && (
-              <div className="hidden sm:flex items-center gap-2">
-                <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("layout")}>
-                  Aplicar layout em todos
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("color")}>
-                  Aplicar cores em todos
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("font")}>
-                  Aplicar fonte em todos
-                </Button>
+          <div className="flex items-center justify-between px-4 py-2 border-b border-ink-750 gap-3">
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setZoom((z) => Math.max(0.15, z - 0.05))} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800">
+                  <ZoomOut className="size-4" />
+                </button>
+                <span className="text-xs text-ink-300 w-10 text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={() => setZoom((z) => Math.min(1.2, z + 0.05))} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800">
+                  <ZoomIn className="size-4" />
+                </button>
               </div>
-            )}
-            <div className="flex items-center gap-2">
+              {density && (
+                <Tooltip content="Densidade visual do slide atual">
+                  <span className={cn("hidden md:inline-flex items-center gap-1.5 text-xs rounded-full border border-ink-700 px-2.5 py-1", DENSITY_COLOR[density.level])}>
+                    <span className="size-1.5 rounded-full bg-current" />
+                    {DENSITY_LABEL[density.level]}
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+
+            <div className="hidden lg:block">
+              <DesignCommandBar onCommand={handleDesignCommand} />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button size="sm" variant="outline" icon={<Gauge className="size-3.5" />} onClick={handleAnalyzeDesign}>
+                Analisar design
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)}>
                 Agendar publicação
               </Button>
@@ -451,6 +582,20 @@ export function DesignStudio() {
               </Button>
             </div>
           </div>
+
+          {isCarousel && (
+            <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 border-b border-ink-750">
+              <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("layout")}>
+                Aplicar layout em todos
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("color")}>
+                Aplicar cores em todos
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => handleApplyToAll("font")}>
+                Aplicar fonte em todos
+              </Button>
+            </div>
+          )}
 
           <div className="flex-1 overflow-auto flex items-center justify-center bg-[radial-gradient(circle,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:16px_16px] p-8">
             {slide && (
@@ -518,6 +663,7 @@ export function DesignStudio() {
         }}
         onDuplicate={(vid) => duplicateVersion(design.id, vid)}
       />
+      <DesignScoreModal open={scoreOpen} onClose={() => setScoreOpen(false)} result={scoreResult} onAutoFix={handleAutoFixFromScore} />
       {contentProject && (
         <ScheduleModal
           open={scheduleOpen}

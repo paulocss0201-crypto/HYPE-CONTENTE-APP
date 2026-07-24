@@ -76,6 +76,7 @@ export interface ImageFilters {
   saturation: number;
   blur: number;
   temperature: number;
+  noise: number;
 }
 
 export interface ImageElement extends ElementBase {
@@ -86,6 +87,8 @@ export interface ImageElement extends ElementBase {
   flipY: boolean;
   cornerRadius: number;
   backgroundRemoved: boolean;
+  duotoneEnabled: boolean;
+  duotoneColor: string;
 }
 
 export type ShapeType = "rect" | "circle" | "line" | "arrow" | "frame";

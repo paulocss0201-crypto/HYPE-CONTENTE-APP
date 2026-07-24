@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Image as KonvaImage } from "react-konva";
+import { Group, Image as KonvaImage, Rect } from "react-konva";
 import Konva from "konva";
 import type { ImageElement } from "@/types/design";
 import { useHtmlImage } from "./useHtmlImage";
@@ -17,7 +17,7 @@ export function ImageNode({
   onTransformEnd,
 }: {
   el: ImageElement;
-  nodeRef: (node: Konva.Image | null) => void;
+  nodeRef: (node: Konva.Group | null) => void;
   onSelect: (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDragStart: DragHandler;
   onDragMove: DragHandler;
@@ -25,14 +25,14 @@ export function ImageNode({
   onTransformEnd: (attrs: TransformAttrs) => void;
 }) {
   const image = useHtmlImage(el.src);
-  const ref = useRef<Konva.Image | null>(null);
+  const imgRef = useRef<Konva.Image | null>(null);
 
-  const filters = [Konva.Filters.Brighten, Konva.Filters.Contrast, Konva.Filters.HSL, Konva.Filters.Blur, Konva.Filters.RGB];
+  const filters = [Konva.Filters.Brighten, Konva.Filters.Contrast, Konva.Filters.HSL, Konva.Filters.Blur, Konva.Filters.RGB, Konva.Filters.Noise];
 
   useEffect(() => {
-    if (ref.current && image) {
-      ref.current.cache();
-      ref.current.getLayer()?.batchDraw();
+    if (imgRef.current && image) {
+      imgRef.current.cache();
+      imgRef.current.getLayer()?.batchDraw();
     }
   }, [image, el.filters, el.backgroundRemoved]);
 
@@ -56,23 +56,14 @@ export function ImageNode({
   const bOffset = temp < 0 ? -temp * 1.2 : 0;
 
   return (
-    <KonvaImage
-      ref={(node) => {
-        ref.current = node;
-        nodeRef(node);
-      }}
-      image={image}
+    <Group
+      ref={nodeRef}
       x={el.x}
       y={el.y}
       width={el.width}
       height={el.height}
       rotation={el.rotation}
       opacity={el.opacity * (el.backgroundRemoved ? 0.92 : 1)}
-      scaleX={el.flipX ? -1 : 1}
-      scaleY={el.flipY ? -1 : 1}
-      offsetX={el.flipX ? el.width : 0}
-      offsetY={el.flipY ? el.height : 0}
-      cornerRadius={el.cornerRadius}
       draggable={!el.locked}
       onClick={onSelect}
       onTap={onSelect}
@@ -80,14 +71,31 @@ export function ImageNode({
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
       onTransformEnd={handleTransformEnd}
-      filters={image ? filters : []}
-      brightness={el.filters.brightness}
-      contrast={el.filters.contrast}
-      saturation={el.filters.saturation}
-      blurRadius={el.filters.blur}
-      red={128 + rOffset}
-      green={128}
-      blue={128 - bOffset}
-    />
+    >
+      <KonvaImage
+        ref={imgRef}
+        image={image}
+        width={el.width}
+        height={el.height}
+        scaleX={el.flipX ? -1 : 1}
+        scaleY={el.flipY ? -1 : 1}
+        offsetX={el.flipX ? el.width : 0}
+        offsetY={el.flipY ? el.height : 0}
+        cornerRadius={el.cornerRadius}
+        listening={false}
+        filters={image ? filters : []}
+        brightness={el.filters.brightness}
+        contrast={el.filters.contrast}
+        saturation={el.filters.saturation}
+        blurRadius={el.filters.blur}
+        noise={el.filters.noise / 100}
+        red={128 + rOffset}
+        green={128}
+        blue={128 - bOffset}
+      />
+      {el.duotoneEnabled && (
+        <Rect width={el.width} height={el.height} fill={el.duotoneColor} opacity={0.55} globalCompositeOperation="color" listening={false} cornerRadius={el.cornerRadius} />
+      )}
+    </Group>
   );
 }

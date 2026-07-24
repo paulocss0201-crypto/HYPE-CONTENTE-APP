@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Button, Input, Select, Slider, Switch, Tooltip } from "@/components/ui";
 import type { DesignElement, DesignSlide, TextElement, ImageElement, ShapeElement } from "@/types/design";
-import { FONT_OPTIONS } from "@/types/design";
-import { applyTextAIAction, TEXT_AI_ACTION_LABEL } from "@/lib/design-ai";
-import type { TextAIAction } from "@/lib/design-ai";
+import { applyTextAIAction, TEXT_AI_ACTION_LABEL, contrastRatio, bestContrastColor, MIN_SAFE_CONTRAST, FONT_CATALOG, FONT_CATEGORY_LABEL, TEXT_STYLE_PRESETS } from "@/lib/design-ai";
+import type { TextAIAction, FontCategory } from "@/lib/design-ai";
 import {
   AlignLeft,
   AlignCenter,
@@ -21,10 +20,13 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TEXT_AI_ACTIONS: TextAIAction[] = ["melhorar-titulo", "headline-forte", "encurtar", "persuasivo", "profissional", "gramatica", "nova-versao", "adaptar-espaco"];
+
+const FONT_CATEGORY_ORDER: FontCategory[] = ["sans", "minimalista", "tecnologica", "editorial", "display", "elegante", "serif", "manuscrita"];
 
 export function RightPropertiesPanel({
   slide,
@@ -93,7 +95,7 @@ export function RightPropertiesPanel({
         )}
       </div>
 
-      {el.kind === "text" && <TextProperties el={el} onUpdate={(patch) => onUpdate(el.id, patch)} />}
+      {el.kind === "text" && <TextProperties el={el} slideBackground={slide.background} onUpdate={(patch) => onUpdate(el.id, patch)} />}
       {el.kind === "image" && <ImageProperties el={el} onUpdate={(patch) => onUpdate(el.id, patch)} />}
       {el.kind === "shape" && <ShapeProperties el={el} onUpdate={(patch) => onUpdate(el.id, patch)} />}
       {el.kind === "icon" && (
@@ -145,21 +147,61 @@ function SectionLabel({ children }: { children: string }) {
   return <p className="text-xs font-medium text-ink-300 mt-1">{children}</p>;
 }
 
-function TextProperties({ el, onUpdate }: { el: TextElement; onUpdate: (patch: Partial<TextElement>) => void }) {
+function TextProperties({ el, slideBackground, onUpdate }: { el: TextElement; slideBackground: string; onUpdate: (patch: Partial<TextElement>) => void }) {
   const [showMore, setShowMore] = useState(false);
 
   function ai(action: TextAIAction) {
     onUpdate({ content: applyTextAIAction(el.content, action, Math.floor((el.width / el.fontSize) * 2)) });
   }
 
+  const ratio = contrastRatio(el.color, slideBackground);
+  const lowContrast = ratio < MIN_SAFE_CONTRAST;
+
   return (
     <div className="flex flex-col gap-3">
+      {lowContrast && (
+        <div className="flex flex-col gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="size-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-xs text-ink-100">Este texto pode estar difícil de ler. Deseja melhorar o contraste?</p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => onUpdate({ color: bestContrastColor(slideBackground) })}>
+            Corrigir automaticamente
+          </Button>
+        </div>
+      )}
+
+      <SectionLabel>Estilos rápidos</SectionLabel>
+      <div className="flex flex-wrap gap-1.5">
+        {TEXT_STYLE_PRESETS.map((preset) => (
+          <button
+            key={preset.key}
+            onClick={() =>
+              onUpdate({
+                fontSize: preset.fontSize,
+                fontWeight: preset.fontWeight,
+                letterSpacing: preset.letterSpacing,
+                lineHeight: preset.lineHeight,
+                uppercase: preset.uppercase,
+              })
+            }
+            className="text-xs rounded-full border border-ink-600 px-2.5 py-1.5 text-ink-100 hover:border-ink-400 hover:text-white transition-colors"
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
       <SectionLabel>Fonte</SectionLabel>
       <Select value={el.fontFamily} onChange={(e) => onUpdate({ fontFamily: e.target.value })}>
-        {FONT_OPTIONS.map((f) => (
-          <option key={f} value={f}>
-            {f}
-          </option>
+        {FONT_CATEGORY_ORDER.map((cat) => (
+          <optgroup key={cat} label={FONT_CATEGORY_LABEL[cat]}>
+            {FONT_CATALOG.filter((f) => f.category === cat).map((f) => (
+              <option key={f.name} value={f.name}>
+                {f.name}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </Select>
 
@@ -255,6 +297,7 @@ function ImageProperties({ el, onUpdate }: { el: ImageElement; onUpdate: (patch:
       <Slider label="Saturação" min={-100} max={100} value={Math.round(el.filters.saturation * 50)} onChange={(v) => onUpdate({ filters: { ...el.filters, saturation: v / 50 } })} />
       <Slider label="Temperatura" min={-50} max={50} value={Math.round(el.filters.temperature)} onChange={(v) => onUpdate({ filters: { ...el.filters, temperature: v } })} />
       <Slider label="Desfoque" min={0} max={20} value={Math.round(el.filters.blur)} onChange={(v) => onUpdate({ filters: { ...el.filters, blur: v } })} />
+      <Slider label="Granulação" min={0} max={100} value={Math.round(el.filters.noise)} onChange={(v) => onUpdate({ filters: { ...el.filters, noise: v } })} />
       <Slider label="Cantos arredondados" min={0} max={200} value={el.cornerRadius} onChange={(v) => onUpdate({ cornerRadius: v })} />
 
       <div className="grid grid-cols-2 gap-2">
@@ -265,6 +308,12 @@ function ImageProperties({ el, onUpdate }: { el: ImageElement; onUpdate: (patch:
           Espelhar V
         </Button>
       </div>
+
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-medium text-ink-300">Duotone</label>
+        <Switch checked={el.duotoneEnabled} onChange={(v) => onUpdate({ duotoneEnabled: v })} />
+      </div>
+      {el.duotoneEnabled && <ColorInput value={el.duotoneColor} onChange={(duotoneColor) => onUpdate({ duotoneColor })} />}
 
       <SectionLabel>Inteligência Artificial</SectionLabel>
       <div className="flex flex-col gap-1.5">

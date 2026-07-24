@@ -55,11 +55,13 @@ export function makeImageElement(partial: Partial<ImageElement> & { src: string 
     locked: false,
     hidden: false,
     kind: "image",
-    filters: { brightness: 0, contrast: 0, saturation: 0, blur: 0, temperature: 0 },
+    filters: { brightness: 0, contrast: 0, saturation: 0, blur: 0, temperature: 0, noise: 0 },
     flipX: false,
     flipY: false,
     cornerRadius: 0,
     backgroundRemoved: false,
+    duotoneEnabled: false,
+    duotoneColor: "#ffffff",
     ...partial,
   };
 }

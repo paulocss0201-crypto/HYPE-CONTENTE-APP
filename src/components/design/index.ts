@@ -8,5 +8,7 @@ export { PromptAssistantModal } from "./PromptAssistantModal";
 export { ExportModal } from "./ExportModal";
 export type { ExportKind } from "./ExportModal";
 export { DesignVersionHistoryModal } from "./DesignVersionHistoryModal";
+export { DesignScoreModal } from "./DesignScoreModal";
+export { DesignCommandBar } from "./DesignCommandBar";
 export { useDesignHistory } from "./useDesignHistory";
 export * from "./toolTypes";

@@ -10,7 +10,7 @@ import type { DesignFormatKey } from "@/types/design";
 import { DESIGN_FORMATS } from "@/types/design";
 import { defaultFormatForContent, generateDesignFromContent, newSalt, TEMPLATES, templatesForFormat } from "@/lib/design-ai";
 import { emptySlide } from "@/lib/design-ai";
-import { FilePlus2, FolderOpen, Kanban as KanbanIcon, LayoutTemplate, Sparkles, ChevronLeft, Search } from "lucide-react";
+import { FilePlus2, Kanban as KanbanIcon, LayoutTemplate, Sparkles, ChevronLeft, Search } from "lucide-react";
 import { FORMAT_ICON } from "@/lib/formatIcons";
 import { FORMAT_LABEL } from "@/types";
 
@@ -108,7 +108,6 @@ export function DesignHub() {
       {step === "choose" && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <EntryCard icon={FilePlus2} title="Criar do zero" description="Comece com uma tela em branco." onClick={startFromScratch} />
-          <EntryCard icon={FolderOpen} title="Selecionar conteúdo salvo" description="Use um Reels, carrossel, Stories ou post já criado." onClick={() => setStep("pick-content")} />
           <EntryCard icon={KanbanIcon} title="Importar do Kanban" description="Escolha um card da Organização de Conteúdo." onClick={() => setStep("pick-content")} />
           <EntryCard icon={LayoutTemplate} title="Escolher um template" description="Comece a partir de um layout profissional pronto." onClick={() => setStep("pick-template")} />
           <EntryCard icon={Sparkles} title="Gerar com Inteligência Artificial" description="Descreva o estilo e deixe a IA montar a primeira versão." onClick={() => setStep("pick-content")} />
