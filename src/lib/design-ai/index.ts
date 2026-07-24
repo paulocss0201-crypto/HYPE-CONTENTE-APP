@@ -1,0 +1,14 @@
+export { generateDesignFromContent, redesignSlide, defaultFormatForContent } from "./generateDesign";
+export { generateImages, buildImageDataUri } from "./imageGen";
+export type { ImageGenParams } from "./imageGen";
+export { expandVisualPrompt, formatExpandedPrompt, refinePromptText } from "./promptAssistant";
+export type { PromptRefineAction } from "./promptAssistant";
+export { applyTextAIAction, TEXT_AI_ACTION_LABEL } from "./textElementAI";
+export type { TextAIAction } from "./textElementAI";
+export { paletteFromPrompt } from "./palette";
+export * from "./elementFactory";
+export { TEMPLATES, TEMPLATE_CATEGORIES, templatesForFormat } from "./templates";
+export type { DesignTemplate, TemplateCategory } from "./templates";
+export * from "./layouts";
+export { extractSlideTexts } from "./slideText";
+export { newSalt } from "@/lib/ai/helpers";

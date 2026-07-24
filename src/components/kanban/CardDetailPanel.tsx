@@ -145,7 +145,7 @@ export function CardDetailPanel({ project, onClose }: { project: Project; onClos
                 className="self-start mt-1"
                 onClick={() => {
                   onClose();
-                  navigate(`/design/${project.id}`);
+                  navigate(`/design?contentProjectId=${project.id}`);
                 }}
               >
                 Abrir no Design de Posts

@@ -2,13 +2,20 @@
 
 Aplicativo web para criadores de conteúdo, empreendedores e empresas transformarem ideias em conteúdos estratégicos para o Instagram — roteiros de Reels, carrosséis e sequências de Stories — usando Inteligência Artificial.
 
+## Funcionalidades principais
+
+- Geradores de Reels, Carrossel e Stories com IA simulada, acessados pela aba "Criar conteúdo"
+- **Organização de Conteúdo**: quadro Kanban (Escrito → Produzido → Postado → Validado) com arrastar e soltar, checklist de produção, histórico de movimentações e análise de resultados por IA
+- **Design de Posts**: estúdio de criação visual em canvas (Konva) com templates, biblioteca de elementos/ícones, geração de imagens com IA, Kit de Marca, exportação em PNG/JPG/PDF/ZIP e integração direta com o Kanban
+
 ## Stack
 
 - React + TypeScript + Vite
 - Tailwind CSS v4 (design system preto/branco/cinza)
 - React Router para navegação
-- Zustand (com persistência em `localStorage`) para autenticação, perfil de marca, projetos e calendário
+- Zustand (com persistência em `localStorage`) para autenticação, perfil de marca, projetos, calendário e designs
 - Framer Motion para microinterações, `@dnd-kit` para reordenação por arrastar e soltar
+- Konva / react-konva para o editor visual (canvas), JSZip para exportação em lote
 
 ## Rodando localmente
 

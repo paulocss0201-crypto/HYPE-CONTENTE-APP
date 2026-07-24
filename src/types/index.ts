@@ -287,6 +287,7 @@ export interface Project {
   scheduledDate?: string;
   scheduledTime?: string;
   calendarNotes?: string;
+  designId?: string;
 
   kanbanStage: KanbanStage;
   kanbanHistory: KanbanHistoryEntry[];

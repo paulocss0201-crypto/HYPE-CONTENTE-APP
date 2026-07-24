@@ -87,7 +87,7 @@ export function KanbanPage() {
 
   function cardHandlers(project: Project) {
     return {
-      onOpenDesign: () => navigate(`/design/${project.id}`),
+      onOpenDesign: () => navigate(`/design?contentProjectId=${project.id}`),
       onOpenSchedule: () => setScheduleProjectId(project.id),
       onOpenEdit: () => setDetailProjectId(project.id),
       onOpenView: () => setDetailProjectId(project.id),

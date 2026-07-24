@@ -1,25 +1,8 @@
 import type { GeneratedContent } from "@/types";
 import { buildHook, buildCta } from "./hooks";
+import { shortenText, persuasiveText, professionalText } from "./textTransforms";
 
 export type RefineAction = "shorten" | "persuasive" | "professional" | "hook" | "cta";
-
-function shortenText(text: string): string {
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  return sentences.slice(0, Math.max(1, Math.ceil(sentences.length / 2))).join(" ");
-}
-
-function persuasiveText(text: string): string {
-  const boosters = ["Sem enrolação: ", "Prova real: ", "Isso funciona porque "];
-  return `${boosters[Math.floor(Math.random() * boosters.length)]}${text}`;
-}
-
-function professionalText(text: string): string {
-  return text
-    .replace(/\bpra\b/gi, "para")
-    .replace(/\bvc\b/gi, "você")
-    .replace(/!{2,}/g, ".")
-    .trim();
-}
 
 function transform(text: string, action: RefineAction): string {
   if (action === "shorten") return shortenText(text);
