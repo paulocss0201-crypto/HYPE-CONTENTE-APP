@@ -3,6 +3,7 @@ import { Button, Input, Select, Slider, Switch, Tooltip } from "@/components/ui"
 import type { DesignElement, DesignSlide, TextElement, ImageElement, ShapeElement } from "@/types/design";
 import { applyTextAIAction, TEXT_AI_ACTION_LABEL, contrastRatio, bestContrastColor, MIN_SAFE_CONTRAST, FONT_CATALOG, FONT_CATEGORY_LABEL, TEXT_STYLE_PRESETS } from "@/lib/design-ai";
 import type { TextAIAction, FontCategory } from "@/lib/design-ai";
+import type { EditMode } from "./toolTypes";
 import {
   AlignLeft,
   AlignCenter,
@@ -31,6 +32,7 @@ const FONT_CATEGORY_ORDER: FontCategory[] = ["sans", "minimalista", "tecnologica
 export function RightPropertiesPanel({
   slide,
   selected,
+  mode = "avancado",
   onUpdate,
   onDelete,
   onDuplicate,
@@ -38,6 +40,7 @@ export function RightPropertiesPanel({
 }: {
   slide: DesignSlide;
   selected: DesignElement[];
+  mode?: EditMode;
   onUpdate: (id: string, patch: Partial<DesignElement>) => void;
   onDelete: (ids: string[]) => void;
   onDuplicate: (ids: string[]) => void;
@@ -95,8 +98,8 @@ export function RightPropertiesPanel({
         )}
       </div>
 
-      {el.kind === "text" && <TextProperties el={el} slideBackground={slide.background} onUpdate={(patch) => onUpdate(el.id, patch)} />}
-      {el.kind === "image" && <ImageProperties el={el} onUpdate={(patch) => onUpdate(el.id, patch)} />}
+      {el.kind === "text" && <TextProperties el={el} slideBackground={slide.background} mode={mode} onUpdate={(patch) => onUpdate(el.id, patch)} />}
+      {el.kind === "image" && <ImageProperties el={el} mode={mode} onUpdate={(patch) => onUpdate(el.id, patch)} />}
       {el.kind === "shape" && <ShapeProperties el={el} onUpdate={(patch) => onUpdate(el.id, patch)} />}
       {el.kind === "icon" && (
         <div className="flex flex-col gap-2">
@@ -147,7 +150,7 @@ function SectionLabel({ children }: { children: string }) {
   return <p className="text-xs font-medium text-ink-300 mt-1">{children}</p>;
 }
 
-function TextProperties({ el, slideBackground, onUpdate }: { el: TextElement; slideBackground: string; onUpdate: (patch: Partial<TextElement>) => void }) {
+function TextProperties({ el, slideBackground, mode, onUpdate }: { el: TextElement; slideBackground: string; mode: EditMode; onUpdate: (patch: Partial<TextElement>) => void }) {
   const [showMore, setShowMore] = useState(false);
 
   function ai(action: TextAIAction) {
@@ -157,8 +160,26 @@ function TextProperties({ el, slideBackground, onUpdate }: { el: TextElement; sl
   const ratio = contrastRatio(el.color, slideBackground);
   const lowContrast = ratio < MIN_SAFE_CONTRAST;
 
+  const aiSection = (
+    <div className={cn("flex flex-col gap-2", mode === "ia" && "rounded-xl border border-white/15 bg-white/5 p-3")}>
+      <SectionLabel>Inteligência Artificial</SectionLabel>
+      <div className="flex flex-wrap gap-1.5">
+        {TEXT_AI_ACTIONS.map((action) => (
+          <button
+            key={action}
+            onClick={() => ai(action)}
+            className="flex items-center gap-1 text-xs rounded-full border border-ink-600 px-2.5 py-1.5 text-ink-100 hover:border-ink-400 hover:text-white transition-colors"
+          >
+            <Sparkles className="size-3" /> {TEXT_AI_ACTION_LABEL[action]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-3">
+      {mode === "ia" && aiSection}
       {lowContrast && (
         <div className="flex flex-col gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3">
           <div className="flex items-start gap-2">
@@ -245,59 +266,73 @@ function TextProperties({ el, slideBackground, onUpdate }: { el: TextElement; sl
         </button>
       </div>
 
-      <button onClick={() => setShowMore((s) => !s)} className="flex items-center justify-between text-xs font-medium text-ink-300 hover:text-white py-1">
-        Espaçamento, efeitos e curva
-        {showMore ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-      </button>
+      {mode === "avancado" && (
+        <>
+          <button onClick={() => setShowMore((s) => !s)} className="flex items-center justify-between text-xs font-medium text-ink-300 hover:text-white py-1">
+            Espaçamento, efeitos e curva
+            {showMore ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          </button>
 
-      {showMore && (
-        <div className="flex flex-col gap-3 animate-fade-in">
-          <Slider label="Espaçamento entre letras" min={-5} max={30} value={el.letterSpacing} onChange={(v) => onUpdate({ letterSpacing: v })} />
-          <Slider label="Espaçamento entre linhas" min={80} max={220} value={Math.round(el.lineHeight * 100)} onChange={(v) => onUpdate({ lineHeight: v / 100 })} />
+          {showMore && (
+            <div className="flex flex-col gap-3 animate-fade-in">
+              <Slider label="Espaçamento entre letras" min={-5} max={30} value={el.letterSpacing} onChange={(v) => onUpdate({ letterSpacing: v })} />
+              <Slider label="Espaçamento entre linhas" min={80} max={220} value={Math.round(el.lineHeight * 100)} onChange={(v) => onUpdate({ lineHeight: v / 100 })} />
 
-          <Switch checked={el.shadow} onChange={(v) => onUpdate({ shadow: v })} label="Sombra" />
-          <Switch checked={el.stroke} onChange={(v) => onUpdate({ stroke: v })} label="Contorno" />
-          {el.stroke && <ColorInput value={el.strokeColor} onChange={(c) => onUpdate({ strokeColor: c })} />}
-          <Switch checked={el.background} onChange={(v) => onUpdate({ background: v })} label="Fundo no texto" />
-          {el.background && <ColorInput value={el.backgroundColor} onChange={(c) => onUpdate({ backgroundColor: c })} />}
-          <Switch checked={el.gradient} onChange={(v) => onUpdate({ gradient: v })} label="Gradiente no texto" />
-          {el.gradient && (
-            <div className="grid grid-cols-2 gap-2">
-              <ColorInput value={el.gradientFrom} onChange={(c) => onUpdate({ gradientFrom: c })} />
-              <ColorInput value={el.gradientTo} onChange={(c) => onUpdate({ gradientTo: c })} />
+              <Switch checked={el.shadow} onChange={(v) => onUpdate({ shadow: v })} label="Sombra" />
+              <Switch checked={el.stroke} onChange={(v) => onUpdate({ stroke: v })} label="Contorno" />
+              {el.stroke && <ColorInput value={el.strokeColor} onChange={(c) => onUpdate({ strokeColor: c })} />}
+              <Switch checked={el.background} onChange={(v) => onUpdate({ background: v })} label="Fundo no texto" />
+              {el.background && <ColorInput value={el.backgroundColor} onChange={(c) => onUpdate({ backgroundColor: c })} />}
+              <Switch checked={el.gradient} onChange={(v) => onUpdate({ gradient: v })} label="Gradiente no texto" />
+              {el.gradient && (
+                <div className="grid grid-cols-2 gap-2">
+                  <ColorInput value={el.gradientFrom} onChange={(c) => onUpdate({ gradientFrom: c })} />
+                  <ColorInput value={el.gradientTo} onChange={(c) => onUpdate({ gradientTo: c })} />
+                </div>
+              )}
+              <Switch checked={el.curved} onChange={(v) => onUpdate({ curved: v })} label="Curvar texto" />
+              {el.curved && <Slider label="Curvatura" min={10} max={180} value={el.curveAmount} onChange={(v) => onUpdate({ curveAmount: v })} />}
             </div>
           )}
-          <Switch checked={el.curved} onChange={(v) => onUpdate({ curved: v })} label="Curvar texto" />
-          {el.curved && <Slider label="Curvatura" min={10} max={180} value={el.curveAmount} onChange={(v) => onUpdate({ curveAmount: v })} />}
-        </div>
+        </>
       )}
 
-      <SectionLabel>Inteligência Artificial</SectionLabel>
-      <div className="flex flex-wrap gap-1.5">
-        {TEXT_AI_ACTIONS.map((action) => (
-          <button
-            key={action}
-            onClick={() => ai(action)}
-            className="flex items-center gap-1 text-xs rounded-full border border-ink-600 px-2.5 py-1.5 text-ink-100 hover:border-ink-400 hover:text-white transition-colors"
-          >
-            <Sparkles className="size-3" /> {TEXT_AI_ACTION_LABEL[action]}
-          </button>
-        ))}
-      </div>
+      {mode !== "ia" && aiSection}
     </div>
   );
 }
 
-function ImageProperties({ el, onUpdate }: { el: ImageElement; onUpdate: (patch: Partial<ImageElement>) => void }) {
+function ImageProperties({ el, mode, onUpdate }: { el: ImageElement; mode: EditMode; onUpdate: (patch: Partial<ImageElement>) => void }) {
+  const aiSection = (
+    <div className={cn("flex flex-col gap-1.5", mode === "ia" && "rounded-xl border border-white/15 bg-white/5 p-3")}>
+      <SectionLabel>Inteligência Artificial</SectionLabel>
+      <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ backgroundRemoved: !el.backgroundRemoved })}>
+        {el.backgroundRemoved ? "Restaurar fundo" : "Remover fundo"}
+      </Button>
+      <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ filters: { ...el.filters, brightness: 0.08, contrast: 8 } })}>
+        Melhorar qualidade
+      </Button>
+      <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ filters: { ...el.filters, brightness: el.filters.brightness + 0.1 } })}>
+        Corrigir iluminação
+      </Button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-3">
+      {mode === "ia" && aiSection}
+
       <SectionLabel>Ajustes</SectionLabel>
       <Slider label="Brilho" min={-50} max={50} value={Math.round(el.filters.brightness * 100)} onChange={(v) => onUpdate({ filters: { ...el.filters, brightness: v / 100 } })} />
       <Slider label="Contraste" min={-50} max={50} value={Math.round(el.filters.contrast)} onChange={(v) => onUpdate({ filters: { ...el.filters, contrast: v } })} />
       <Slider label="Saturação" min={-100} max={100} value={Math.round(el.filters.saturation * 50)} onChange={(v) => onUpdate({ filters: { ...el.filters, saturation: v / 50 } })} />
-      <Slider label="Temperatura" min={-50} max={50} value={Math.round(el.filters.temperature)} onChange={(v) => onUpdate({ filters: { ...el.filters, temperature: v } })} />
-      <Slider label="Desfoque" min={0} max={20} value={Math.round(el.filters.blur)} onChange={(v) => onUpdate({ filters: { ...el.filters, blur: v } })} />
-      <Slider label="Granulação" min={0} max={100} value={Math.round(el.filters.noise)} onChange={(v) => onUpdate({ filters: { ...el.filters, noise: v } })} />
+      {mode === "avancado" && (
+        <>
+          <Slider label="Temperatura" min={-50} max={50} value={Math.round(el.filters.temperature)} onChange={(v) => onUpdate({ filters: { ...el.filters, temperature: v } })} />
+          <Slider label="Desfoque" min={0} max={20} value={Math.round(el.filters.blur)} onChange={(v) => onUpdate({ filters: { ...el.filters, blur: v } })} />
+          <Slider label="Granulação" min={0} max={100} value={Math.round(el.filters.noise)} onChange={(v) => onUpdate({ filters: { ...el.filters, noise: v } })} />
+        </>
+      )}
       <Slider label="Cantos arredondados" min={0} max={200} value={el.cornerRadius} onChange={(v) => onUpdate({ cornerRadius: v })} />
 
       <div className="grid grid-cols-2 gap-2">
@@ -309,24 +344,17 @@ function ImageProperties({ el, onUpdate }: { el: ImageElement; onUpdate: (patch:
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-ink-300">Duotone</label>
-        <Switch checked={el.duotoneEnabled} onChange={(v) => onUpdate({ duotoneEnabled: v })} />
-      </div>
-      {el.duotoneEnabled && <ColorInput value={el.duotoneColor} onChange={(duotoneColor) => onUpdate({ duotoneColor })} />}
+      {mode === "avancado" && (
+        <>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-ink-300">Duotone</label>
+            <Switch checked={el.duotoneEnabled} onChange={(v) => onUpdate({ duotoneEnabled: v })} />
+          </div>
+          {el.duotoneEnabled && <ColorInput value={el.duotoneColor} onChange={(duotoneColor) => onUpdate({ duotoneColor })} />}
+        </>
+      )}
 
-      <SectionLabel>Inteligência Artificial</SectionLabel>
-      <div className="flex flex-col gap-1.5">
-        <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ backgroundRemoved: !el.backgroundRemoved })}>
-          {el.backgroundRemoved ? "Restaurar fundo" : "Remover fundo"}
-        </Button>
-        <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ filters: { ...el.filters, brightness: 0.08, contrast: 8 } })}>
-          Melhorar qualidade
-        </Button>
-        <Button size="sm" variant="outline" icon={<Sparkles className="size-3.5" />} onClick={() => onUpdate({ filters: { ...el.filters, brightness: el.filters.brightness + 0.1 } })}>
-          Corrigir iluminação
-        </Button>
-      </div>
+      {mode !== "ia" && aiSection}
     </div>
   );
 }

@@ -10,5 +10,6 @@ export type { ExportKind } from "./ExportModal";
 export { DesignVersionHistoryModal } from "./DesignVersionHistoryModal";
 export { DesignScoreModal } from "./DesignScoreModal";
 export { DesignCommandBar } from "./DesignCommandBar";
+export { ShortcutsModal } from "./ShortcutsModal";
 export { useDesignHistory } from "./useDesignHistory";
 export * from "./toolTypes";

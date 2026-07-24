@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Input, Tooltip } from "@/components/ui";
-import { ChevronLeft, Undo2, Redo2, History, Eye, Share2, Download, Save, Check, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, Undo2, Redo2, History, Eye, Share2, Download, Save, Check, Loader2, AlertCircle, Keyboard } from "lucide-react";
 import type { SaveState } from "@/types/design";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ export function TopBar({
   onPreview,
   onShare,
   onExport,
+  onOpenShortcuts,
   backTo,
 }: {
   name: string;
@@ -32,6 +33,7 @@ export function TopBar({
   onPreview: () => void;
   onShare: () => void;
   onExport: () => void;
+  onOpenShortcuts: () => void;
   backTo: string;
 }) {
   const navigate = useNavigate();
@@ -76,6 +78,11 @@ export function TopBar({
         <Tooltip content="Histórico de versões">
           <button onClick={onOpenHistory} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800 transition-colors">
             <History className="size-4" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Atalhos de teclado">
+          <button onClick={onOpenShortcuts} className="p-1.5 rounded-lg text-ink-300 hover:text-white hover:bg-ink-800 transition-colors">
+            <Keyboard className="size-4" />
           </button>
         </Tooltip>
       </div>

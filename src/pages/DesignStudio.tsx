@@ -19,10 +19,12 @@ import {
   DesignVersionHistoryModal,
   DesignScoreModal,
   DesignCommandBar,
+  ShortcutsModal,
   useDesignHistory,
 } from "@/components/design";
 import type { ExportKind } from "@/components/design";
-import type { ToolKey } from "@/components/design/toolTypes";
+import type { ToolKey, EditMode } from "@/components/design/toolTypes";
+import { EDIT_MODES } from "@/components/design/toolTypes";
 import { TemplatesPanel, TextToolPanel, ElementsToolPanel, BackgroundsToolPanel, UploadsToolPanel, BrandKitPanel, ImagesToolPanel, AIToolPanel } from "@/components/design/panels";
 import {
   makeImageElement,
@@ -83,6 +85,8 @@ export function DesignStudio() {
   const [generatingDesign, setGeneratingDesign] = useState(false);
   const [scoreOpen, setScoreOpen] = useState(false);
   const [scoreResult, setScoreResult] = useState<DesignScoreResult | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [editMode, setEditMode] = useState<EditMode>("avancado");
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,6 +137,74 @@ export function DesignStudio() {
   const format = useMemo(() => DESIGN_FORMATS.find((f) => f.key === design?.format) ?? DESIGN_FORMATS[0], [design?.format]);
   const slide = history.slides[activeSlideIndex] ?? history.slides[0];
   const selectedElements = slide ? slide.elements.filter((e) => selectedIds.includes(e.id)) : [];
+
+  // Global keyboard shortcuts (skipped while typing in an input/textarea/select or editing text on canvas).
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable;
+      if (isTyping || editingTextId) {
+        if (e.key === "Escape") target.blur?.();
+        return;
+      }
+      const meta = e.metaKey || e.ctrlKey;
+
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (design) {
+          updateSlides(design.id, history.slides);
+          pushVersion(design.id);
+          pushToast("Projeto salvo", "success");
+        }
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) history.redo();
+        else history.undo();
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        if (selectedIds.length > 0) duplicateElements(selectedIds);
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "g") {
+        e.preventDefault();
+        if (e.shiftKey) ungroupSelected();
+        else groupSelected();
+        return;
+      }
+      if (e.key === "Escape") {
+        setSelectedIds([]);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.length > 0) {
+        e.preventDefault();
+        deleteElements(selectedIds);
+        return;
+      }
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) && selectedIds.length > 0) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        selectedIds.forEach((id) => {
+          const el = slide?.elements.find((e2) => e2.id === id);
+          if (el) updateElementLive(id, { x: el.x + dx, y: el.y + dy });
+        });
+        history.commit();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds, editingTextId, slide, design?.id]);
 
   function setSlideAt(index: number, newSlide: DesignSlide) {
     const next = history.slides.map((s, i) => (i === index ? newSlide : s));
@@ -500,6 +572,7 @@ export function DesignStudio() {
         canUndo={history.canUndo}
         canRedo={history.canRedo}
         onOpenHistory={() => setHistoryOpen(true)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
         onPreview={() => window.open(stageRef.current?.toDataURL({ pixelRatio: 1 }), "_blank")}
         onShare={() => pushToast("Link de compartilhamento copiado (simulado)", "success")}
         onExport={() => setExportOpen(true)}
@@ -564,6 +637,23 @@ export function DesignStudio() {
                   </span>
                 </Tooltip>
               )}
+              <div className="hidden xl:flex items-center rounded-full border border-ink-700 p-0.5">
+                {EDIT_MODES.map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => {
+                      setEditMode(m.key);
+                      if (m.key === "ia") setLeftPanel("ai");
+                    }}
+                    className={cn(
+                      "text-xs px-2.5 py-1 rounded-full transition-colors",
+                      editMode === m.key ? "bg-white text-ink-950 font-medium" : "text-ink-300 hover:text-white"
+                    )}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="hidden lg:block">
@@ -643,6 +733,7 @@ export function DesignStudio() {
               onDelete={deleteElements}
               onDuplicate={duplicateElements}
               onSlideBackground={handleSlideBackground}
+              mode={editMode}
             />
           )}
         </div>
@@ -664,6 +755,7 @@ export function DesignStudio() {
         onDuplicate={(vid) => duplicateVersion(design.id, vid)}
       />
       <DesignScoreModal open={scoreOpen} onClose={() => setScoreOpen(false)} result={scoreResult} onAutoFix={handleAutoFixFromScore} />
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       {contentProject && (
         <ScheduleModal
           open={scheduleOpen}

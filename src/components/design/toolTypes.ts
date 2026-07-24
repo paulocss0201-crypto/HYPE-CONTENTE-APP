@@ -1,5 +1,13 @@
 export type ToolKey = "templates" | "text" | "images" | "elements" | "shapes" | "icons" | "backgrounds" | "uploads" | "brand" | "ai" | "layers";
 
+export type EditMode = "simples" | "avancado" | "ia";
+
+export const EDIT_MODES: { key: EditMode; label: string }[] = [
+  { key: "simples", label: "Simples" },
+  { key: "avancado", label: "Avançado" },
+  { key: "ia", label: "IA" },
+];
+
 export interface ToolMeta {
   key: ToolKey;
   label: string;
