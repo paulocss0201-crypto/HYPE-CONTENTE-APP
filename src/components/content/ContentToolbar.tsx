@@ -5,7 +5,7 @@ import type { ContentFormat } from "@/types";
 import { RefreshCw, Wand2, Scissors, Briefcase, Anchor, MousePointerClick, ArrowRightLeft, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const FORMAT_LABEL: Record<ContentFormat, string> = {
+const TRANSFORM_LABEL: Partial<Record<ContentFormat, string>> = {
   reels: "Roteiro de Reels",
   carousel: "Carrossel",
   stories: "Sequência de Stories",
@@ -63,7 +63,7 @@ export function ContentToolbar({
                 }}
                 className={cn("w-full text-left px-3 py-2 rounded-lg text-sm text-ink-100 hover:bg-ink-800 hover:text-white transition-colors")}
               >
-                {FORMAT_LABEL[f]}
+                {TRANSFORM_LABEL[f]}
               </button>
             ))}
           </div>

@@ -5,7 +5,8 @@ import { Button, Input, ChipGroup, Slider, Card, CardHover, Badge, EmptyState } 
 import { useBrandStore } from "@/store/brandStore";
 import { generateIdeas, newSalt } from "@/lib/ai";
 import type { ContentFormat, IdeaCard } from "@/types";
-import { Lightbulb, Clapperboard, Layers, CircleDot, Sparkles } from "lucide-react";
+import { FORMAT_ICON } from "@/lib/formatIcons";
+import { Lightbulb, Sparkles } from "lucide-react";
 
 const COUNT_OPTIONS = [
   { key: "3", label: "3 ideias" },
@@ -22,7 +23,6 @@ const FORMAT_OPTIONS: { key: ContentFormat | "todos"; label: string }[] = [
   { key: "stories", label: "Stories" },
 ];
 
-const FORMAT_ICON = { reels: Clapperboard, carousel: Layers, stories: CircleDot };
 
 export function Ideas() {
   const navigate = useNavigate();

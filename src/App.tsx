@@ -15,6 +15,8 @@ import { StoriesGenerator } from "@/pages/generators/StoriesGenerator";
 import { Repurpose } from "@/pages/Repurpose";
 import { Ideas } from "@/pages/Ideas";
 import { CalendarPage } from "@/pages/Calendar";
+import { KanbanPage } from "@/pages/Kanban";
+import { DesignPosts } from "@/pages/DesignPosts";
 import { Projects } from "@/pages/Projects";
 import { Brand } from "@/pages/Brand";
 import { Favorites } from "@/pages/Favorites";
@@ -63,6 +65,8 @@ function App() {
               <Route path="/repurpose" element={<Repurpose />} />
               <Route path="/ideas" element={<Ideas />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/organizacao" element={<KanbanPage />} />
+              <Route path="/design/:id" element={<DesignPosts />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/brand" element={<Brand />} />
               <Route path="/favorites" element={<Favorites />} />

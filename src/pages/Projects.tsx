@@ -5,15 +5,13 @@ import { Button, Input, ChipGroup, Select, Card, CardHover, StatusBadge, EmptySt
 import { ProjectDetailModal } from "@/components/content";
 import { useContentStore } from "@/store/contentStore";
 import { useUiStore } from "@/store/uiStore";
-import type { ContentFormat, ProjectStatus } from "@/types";
-import { STATUS_LABEL } from "@/types";
+import type { ProjectStatus } from "@/types";
+import { STATUS_LABEL, FORMAT_LABEL } from "@/types";
 import { contentToText, downloadTextFile } from "@/lib/exportContent";
 import { formatDate, timeAgo } from "@/lib/utils";
+import { FORMAT_ICON } from "@/lib/formatIcons";
 import {
   Search,
-  Clapperboard,
-  Layers,
-  CircleDot,
   MoreVertical,
   Pencil,
   Copy,
@@ -24,9 +22,6 @@ import {
   FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const FORMAT_ICON: Record<ContentFormat, typeof Clapperboard> = { reels: Clapperboard, carousel: Layers, stories: CircleDot };
-const FORMAT_LABEL: Record<ContentFormat, string> = { reels: "Reels", carousel: "Carrossel", stories: "Stories" };
 
 const FORMAT_FILTERS = [
   { key: "todos", label: "Todos" },

@@ -1,4 +1,11 @@
-export type ContentFormat = "reels" | "carousel" | "stories";
+export type ContentFormat = "reels" | "carousel" | "stories" | "post";
+
+export const FORMAT_LABEL: Record<ContentFormat, string> = {
+  reels: "Reels",
+  carousel: "Carrossel",
+  stories: "Stories",
+  post: "Post estático",
+};
 
 export type ObjectiveKey =
   | "educar"
@@ -167,16 +174,103 @@ export interface StoriesContent {
   stories: StorySlide[];
 }
 
+export interface PostContent {
+  title: string;
+  caption: string;
+  cta: string;
+  notes: string;
+}
+
 export type GeneratedContent =
   | { format: "reels"; data: ReelContent }
   | { format: "carousel"; data: CarouselContent }
-  | { format: "stories"; data: StoriesContent };
+  | { format: "stories"; data: StoriesContent }
+  | { format: "post"; data: PostContent };
 
 export interface ContentVersion {
   id: string;
   label: string;
   createdAt: string;
   content: GeneratedContent;
+}
+
+// --- Kanban: "Organização de Conteúdo" ---
+
+export type KanbanStage = "escrito" | "produzido" | "postado" | "validado";
+
+export const KANBAN_STAGE_LABEL: Record<KanbanStage, string> = {
+  escrito: "Conteúdo Escrito",
+  produzido: "Conteúdo Produzido",
+  postado: "Conteúdo Postado",
+  validado: "Conteúdo Validado",
+};
+
+export const KANBAN_STAGE_ORDER: KanbanStage[] = ["escrito", "produzido", "postado", "validado"];
+
+export type Priority = "baixa" | "media" | "alta" | "urgente";
+
+export const PRIORITY_LABEL: Record<Priority, string> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+  urgente: "Urgente",
+};
+
+export const SUGGESTED_LABELS = [
+  "Educativo",
+  "Autoridade",
+  "Engajamento",
+  "Venda",
+  "Urgente",
+  "Campanha",
+  "Lançamento",
+  "Prova social",
+];
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export const DEFAULT_CHECKLIST_ITEMS = [
+  "Copy revisada",
+  "Design criado",
+  "Imagens selecionadas",
+  "Legenda revisada",
+  "Vídeo gravado",
+  "Vídeo editado",
+  "Conteúdo agendado",
+  "Conteúdo publicado",
+  "Resultados analisados",
+];
+
+export interface ContentMetrics {
+  views?: number;
+  reach?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+  newFollowers?: number;
+  clicks?: number;
+  leads?: number;
+  sales?: number;
+  notes?: string;
+}
+
+export interface AIAnalysis {
+  whatWorked: string;
+  whatToImprove: string;
+  mainTrigger: string;
+  elementsToReuse: string;
+  suggestions: string[];
+  similarIdeas: string[];
+}
+
+export interface KanbanHistoryEntry {
+  stage: KanbanStage;
+  at: string;
 }
 
 export interface Project {
@@ -193,6 +287,18 @@ export interface Project {
   scheduledDate?: string;
   scheduledTime?: string;
   calendarNotes?: string;
+
+  kanbanStage: KanbanStage;
+  kanbanHistory: KanbanHistoryEntry[];
+  kanbanOrder: number;
+  priority: Priority;
+  responsible: string;
+  platform: string;
+  labels: string[];
+  checklist: ChecklistItem[];
+  notes?: string;
+  metrics?: ContentMetrics;
+  aiAnalysis?: AIAnalysis;
 }
 
 export interface CalendarEntry {

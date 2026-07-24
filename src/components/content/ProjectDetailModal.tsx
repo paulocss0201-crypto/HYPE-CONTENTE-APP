@@ -3,6 +3,7 @@ import type { Project } from "@/types";
 import { ReelResultView } from "./ReelResultView";
 import { CarouselResultView } from "./CarouselResultView";
 import { StoriesResultView } from "./StoriesResultView";
+import { PostResultView } from "./PostResultView";
 import { ResultActionsBar } from "./ResultActionsBar";
 import { useContentStore } from "@/store/contentStore";
 import { useUiStore } from "@/store/uiStore";
@@ -40,6 +41,7 @@ export function ProjectDetailModal({ project, onClose }: { project: Project; onC
         {content.format === "reels" && <ReelResultView content={content.data} onChange={(data) => handleChange({ format: "reels", data })} />}
         {content.format === "carousel" && <CarouselResultView content={content.data} onChange={(data) => handleChange({ format: "carousel", data })} />}
         {content.format === "stories" && <StoriesResultView content={content.data} onChange={(data) => handleChange({ format: "stories", data })} />}
+        {content.format === "post" && <PostResultView content={content.data} onChange={(data) => handleChange({ format: "post", data })} />}
         <ResultActionsBar
           onCopy={handleCopy}
           onSave={handleSave}

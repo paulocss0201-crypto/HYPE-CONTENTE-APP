@@ -3,16 +3,47 @@ import { persist } from "zustand/middleware";
 import type {
   CalendarEntry,
   GeneratedContent,
+  KanbanStage,
+  Priority,
   Project,
   ProjectStatus,
 } from "@/types";
+import { DEFAULT_CHECKLIST_ITEMS } from "@/types";
 import { uid } from "@/lib/utils";
+
+type CreateProjectInput = Omit<
+  Project,
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "versions"
+  | "favorite"
+  | "status"
+  | "kanbanStage"
+  | "kanbanHistory"
+  | "kanbanOrder"
+  | "priority"
+  | "responsible"
+  | "platform"
+  | "labels"
+  | "checklist"
+  | "notes"
+  | "metrics"
+  | "aiAnalysis"
+> & {
+  status?: ProjectStatus;
+  kanbanStage?: KanbanStage;
+  priority?: Priority;
+  responsible?: string;
+  platform?: string;
+  labels?: string[];
+};
 
 interface ContentState {
   projects: Project[];
   calendarEntries: CalendarEntry[];
 
-  createProject: (input: Omit<Project, "id" | "createdAt" | "updatedAt" | "versions" | "favorite" | "status"> & { status?: ProjectStatus }) => Project;
+  createProject: (input: CreateProjectInput) => Project;
   updateProjectContent: (id: string, content: GeneratedContent, versionLabel?: string) => void;
   updateProject: (id: string, patch: Partial<Project>) => void;
   removeProject: (id: string) => void;
@@ -22,10 +53,17 @@ interface ContentState {
   deleteVersion: (projectId: string, versionId: string) => void;
   renameVersion: (projectId: string, versionId: string, label: string) => void;
 
+  moveKanbanStage: (id: string, stage: KanbanStage) => void;
+  reorderKanbanColumn: (orderedIds: string[]) => void;
+
   addCalendarEntry: (entry: Omit<CalendarEntry, "id">) => void;
   updateCalendarEntry: (id: string, patch: Partial<CalendarEntry>) => void;
   removeCalendarEntry: (id: string) => void;
   moveCalendarEntry: (id: string, date: string) => void;
+}
+
+function defaultChecklist() {
+  return DEFAULT_CHECKLIST_ITEMS.map((text) => ({ id: uid("chk"), text, done: false }));
 }
 
 export const useContentStore = create<ContentState>()(
@@ -36,6 +74,7 @@ export const useContentStore = create<ContentState>()(
 
       createProject: (input) => {
         const now = new Date().toISOString();
+        const stage = input.kanbanStage ?? "escrito";
         const project: Project = {
           id: uid("proj"),
           favorite: false,
@@ -50,6 +89,14 @@ export const useContentStore = create<ContentState>()(
               content: input.content,
             },
           ],
+          kanbanStage: stage,
+          kanbanHistory: [{ stage, at: now }],
+          kanbanOrder: Date.now(),
+          priority: input.priority ?? "media",
+          responsible: input.responsible ?? "",
+          platform: input.platform ?? "Instagram",
+          labels: input.labels ?? [],
+          checklist: defaultChecklist(),
           ...input,
         };
         set((s) => ({ projects: [project, ...s.projects] }));
@@ -94,6 +141,10 @@ export const useContentStore = create<ContentState>()(
           createdAt: now,
           updatedAt: now,
           favorite: false,
+          kanbanOrder: Date.now(),
+          checklist: original.checklist.map((c) => ({ ...c, id: uid("chk") })),
+          metrics: undefined,
+          aiAnalysis: undefined,
         };
         set((s) => ({ projects: [copy, ...s.projects] }));
       },
@@ -130,6 +181,32 @@ export const useContentStore = create<ContentState>()(
         }));
       },
 
+      moveKanbanStage: (id, stage) => {
+        const now = new Date().toISOString();
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  kanbanStage: stage,
+                  kanbanOrder: Date.now(),
+                  kanbanHistory: [...p.kanbanHistory, { stage, at: now }],
+                  updatedAt: now,
+                }
+              : p
+          ),
+        }));
+      },
+
+      reorderKanbanColumn: (orderedIds) => {
+        set((s) => {
+          const orderMap = new Map(orderedIds.map((id, i) => [id, i]));
+          return {
+            projects: s.projects.map((p) => (orderMap.has(p.id) ? { ...p, kanbanOrder: orderMap.get(p.id)! } : p)),
+          };
+        });
+      },
+
       addCalendarEntry: (entry) => {
         const newEntry: CalendarEntry = { ...entry, id: uid("cal") };
         set((s) => ({ calendarEntries: [...s.calendarEntries, newEntry] }));
@@ -145,7 +222,27 @@ export const useContentStore = create<ContentState>()(
         set((s) => ({ calendarEntries: s.calendarEntries.map((e) => (e.id === id ? { ...e, date } : e)) }));
       },
     }),
-    { name: "hype-content" }
+    {
+      name: "hype-content",
+      version: 2,
+      migrate: (persisted: unknown) => {
+        const state = persisted as { projects?: Array<Record<string, unknown>>; calendarEntries?: unknown };
+        if (Array.isArray(state?.projects)) {
+          state.projects = state.projects.map((p, i) => ({
+            kanbanStage: "escrito",
+            kanbanHistory: [{ stage: "escrito", at: (p.createdAt as string) ?? new Date().toISOString() }],
+            kanbanOrder: Date.now() - i,
+            priority: "media",
+            responsible: "",
+            platform: "Instagram",
+            labels: [],
+            checklist: defaultChecklist(),
+            ...p,
+          }));
+        }
+        return state as unknown as ContentState;
+      },
+    }
   )
 );
 

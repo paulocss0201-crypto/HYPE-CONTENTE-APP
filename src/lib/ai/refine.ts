@@ -38,11 +38,15 @@ export function refineContent(content: GeneratedContent, action: RefineAction, s
       const hook = buildHook({ theme: content.data.slides[0]?.title ?? "conteúdo", tone: "profissional", objective: "engajar", salt });
       return { format: "carousel", data: { ...content.data, captionHook: hook } };
     }
-    const hook = buildHook({ theme: content.data.stories[0]?.mainText ?? "conteúdo", tone: "profissional", objective: "engajar", salt });
-    return {
-      format: "stories",
-      data: { stories: content.data.stories.map((s, i) => (i === 0 ? { ...s, mainText: hook } : s)) },
-    };
+    if (content.format === "stories") {
+      const hook = buildHook({ theme: content.data.stories[0]?.mainText ?? "conteúdo", tone: "profissional", objective: "engajar", salt });
+      return {
+        format: "stories",
+        data: { stories: content.data.stories.map((s, i) => (i === 0 ? { ...s, mainText: hook } : s)) },
+      };
+    }
+    const hook = buildHook({ theme: content.data.title, tone: "profissional", objective: "engajar", salt });
+    return { format: "post", data: { ...content.data, caption: hook } };
   }
 
   if (action === "cta") {
@@ -55,11 +59,15 @@ export function refineContent(content: GeneratedContent, action: RefineAction, s
       const slides = content.data.slides.map((s) => (s.role === "cta" ? { ...s, body: cta } : s));
       return { format: "carousel", data: { ...content.data, cta, slides } };
     }
+    if (content.format === "stories") {
+      const cta = buildCta({ objective: "engajar", tone: "profissional", salt });
+      return {
+        format: "stories",
+        data: { stories: content.data.stories.map((s) => (s.stage === "cta" ? { ...s, mainText: cta, cta } : s)) },
+      };
+    }
     const cta = buildCta({ objective: "engajar", tone: "profissional", salt });
-    return {
-      format: "stories",
-      data: { stories: content.data.stories.map((s) => (s.stage === "cta" ? { ...s, mainText: cta, cta } : s)) },
-    };
+    return { format: "post", data: { ...content.data, cta } };
   }
 
   if (content.format === "reels") {
@@ -84,14 +92,24 @@ export function refineContent(content: GeneratedContent, action: RefineAction, s
       },
     };
   }
+  if (content.format === "stories") {
+    return {
+      format: "stories",
+      data: {
+        stories: content.data.stories.map((s) => ({
+          ...s,
+          mainText: transform(s.mainText, action),
+          supportText: transform(s.supportText, action),
+        })),
+      },
+    };
+  }
   return {
-    format: "stories",
+    format: "post",
     data: {
-      stories: content.data.stories.map((s) => ({
-        ...s,
-        mainText: transform(s.mainText, action),
-        supportText: transform(s.supportText, action),
-      })),
+      ...content.data,
+      caption: transform(content.data.caption, action),
+      cta: transform(content.data.cta, action),
     },
   };
 }

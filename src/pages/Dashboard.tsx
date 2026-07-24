@@ -8,9 +8,8 @@ import { useContentStore, projectsThisMonth } from "@/store/contentStore";
 import { generateIdeas } from "@/lib/ai";
 import { Clapperboard, Layers, CircleDot, Sparkles, Heart, CalendarDays, FolderKanban, ArrowRight, Lightbulb } from "lucide-react";
 import { formatDate, timeAgo } from "@/lib/utils";
-
-const FORMAT_ICON = { reels: Clapperboard, carousel: Layers, stories: CircleDot };
-const FORMAT_LABEL = { reels: "Reels", carousel: "Carrossel", stories: "Stories" };
+import { FORMAT_ICON } from "@/lib/formatIcons";
+import { FORMAT_LABEL } from "@/types";
 
 export function Dashboard() {
   const navigate = useNavigate();

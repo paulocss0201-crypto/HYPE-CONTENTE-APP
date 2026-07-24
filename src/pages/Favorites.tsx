@@ -4,11 +4,9 @@ import { Button, Card, CardHover, StatusBadge, EmptyState } from "@/components/u
 import { ProjectDetailModal } from "@/components/content";
 import { useContentStore } from "@/store/contentStore";
 import { formatDate } from "@/lib/utils";
-import { Heart, Clapperboard, Layers, CircleDot } from "lucide-react";
-import type { ContentFormat } from "@/types";
-
-const FORMAT_ICON: Record<ContentFormat, typeof Clapperboard> = { reels: Clapperboard, carousel: Layers, stories: CircleDot };
-const FORMAT_LABEL: Record<ContentFormat, string> = { reels: "Reels", carousel: "Carrossel", stories: "Stories" };
+import { Heart } from "lucide-react";
+import { FORMAT_LABEL } from "@/types";
+import { FORMAT_ICON } from "@/lib/formatIcons";
 
 export function Favorites() {
   const projects = useContentStore((s) => s.projects.filter((p) => p.favorite));

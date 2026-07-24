@@ -1,11 +1,9 @@
 import {
   LayoutGrid,
   Sparkles,
-  Clapperboard,
-  Layers,
-  CircleDot,
   Repeat,
   Lightbulb,
+  Kanban,
   CalendarDays,
   FolderKanban,
   Building2,
@@ -24,9 +22,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { key: "home", label: "Início", path: "/", icon: LayoutGrid },
   { key: "create", label: "Criar conteúdo", path: "/create", icon: Sparkles },
-  { key: "reels", label: "Reels", path: "/create/reels", icon: Clapperboard },
-  { key: "carousel", label: "Carrosséis", path: "/create/carousel", icon: Layers },
-  { key: "stories", label: "Stories", path: "/create/stories", icon: CircleDot },
+  { key: "kanban", label: "Organização", path: "/organizacao", icon: Kanban },
   { key: "repurpose", label: "Reaproveitar", path: "/repurpose", icon: Repeat },
   { key: "ideas", label: "Ideias", path: "/ideas", icon: Lightbulb },
   { key: "calendar", label: "Calendário", path: "/calendar", icon: CalendarDays },
@@ -36,4 +32,4 @@ export const NAV_ITEMS: NavItem[] = [
   { key: "settings", label: "Configurações", path: "/settings", icon: Settings },
 ];
 
-export const MOBILE_PRIMARY_KEYS = ["home", "create", "calendar", "projects"];
+export const MOBILE_PRIMARY_KEYS = ["home", "create", "kanban", "calendar"];

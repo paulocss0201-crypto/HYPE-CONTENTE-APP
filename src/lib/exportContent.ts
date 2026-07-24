@@ -18,7 +18,7 @@ export function contentToText(content: GeneratedContent, title: string): string 
       lines.push(`\nSlide ${s.number} (${s.role})`, `Título: ${s.title}`, `Texto: ${s.body}`, `Sugestão visual: ${s.visual}`, `Observação de design: ${s.designNote}`);
     });
     lines.push("", `LEGENDA:\n${d.caption}`, "", `CHAMADA PARA AÇÃO: ${d.cta}`, "", `HASHTAGS: ${d.hashtags.join(" ")}`, "", `TÍTULO ALTERNATIVO: ${d.altTitle}`, `CAPA ALTERNATIVA: ${d.altCover}`);
-  } else {
+  } else if (content.format === "stories") {
     const d = content.data;
     d.stories.forEach((s) => {
       lines.push(
@@ -32,6 +32,9 @@ export function contentToText(content: GeneratedContent, title: string): string 
         s.cta ? `CTA: ${s.cta}` : ""
       );
     });
+  } else {
+    const d = content.data;
+    lines.push(`LEGENDA:\n${d.caption}`, "", `CHAMADA PARA AÇÃO: ${d.cta}`, "", `OBSERVAÇÕES:\n${d.notes}`);
   }
 
   return lines.filter((l) => l !== undefined).join("\n");

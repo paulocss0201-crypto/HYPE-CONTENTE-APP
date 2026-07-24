@@ -23,7 +23,8 @@ import { useUiStore } from "@/store/uiStore";
 import type { CalendarEntry, ContentFormat, ProjectStatus } from "@/types";
 import { STATUS_LABEL, MAIN_GOAL_OPTIONS } from "@/types";
 import { generateCalendarPlan, newSalt } from "@/lib/ai";
-import { ChevronLeft, ChevronRight, Plus, Sparkles, Clapperboard, Layers, CircleDot, Trash2 } from "lucide-react";
+import { FORMAT_ICON } from "@/lib/formatIcons";
+import { ChevronLeft, ChevronRight, Plus, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const VIEW_TABS = [
@@ -31,8 +32,6 @@ const VIEW_TABS = [
   { key: "week", label: "Semanal" },
   { key: "list", label: "Lista" },
 ];
-
-const FORMAT_ICON: Record<ContentFormat, typeof Clapperboard> = { reels: Clapperboard, carousel: Layers, stories: CircleDot };
 const FORMAT_OPTIONS = [
   { key: "reels", label: "Reels" },
   { key: "carousel", label: "Carrossel" },

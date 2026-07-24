@@ -5,6 +5,7 @@ export { ScheduleModal } from "./ScheduleModal";
 export { ReelResultView } from "./ReelResultView";
 export { CarouselResultView } from "./CarouselResultView";
 export { StoriesResultView } from "./StoriesResultView";
+export { PostResultView } from "./PostResultView";
 export { VersionHistoryPanel } from "./VersionHistoryPanel";
 export { ProjectDetailModal } from "./ProjectDetailModal";
 export { EditableText } from "./EditableText";

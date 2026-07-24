@@ -5,6 +5,7 @@ export { generateIdeas } from "./ideas";
 export { generateCalendarPlan } from "./calendar";
 export { repurposeContent, repurposeFromText, runGeneration } from "./repurpose";
 export { refineContent } from "./refine";
+export { analyzeContentResults } from "./analyzeResults";
 export type { RefineAction } from "./refine";
 export { LOADING_PHRASES } from "./loadingPhrases";
 export { newSalt } from "./helpers";
