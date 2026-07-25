@@ -84,6 +84,10 @@ export function makeShapeElement(shapeType: ShapeType, partial: Partial<ShapeEle
     stroke: "#ffffff",
     strokeWidth: 0,
     cornerRadius: shapeType === "rect" ? 16 : 0,
+    gradient: false,
+    gradientFrom: "rgba(0,0,0,0)",
+    gradientTo: "rgba(0,0,0,0.85)",
+    gradientDirection: "vertical",
     ...partial,
   };
 }

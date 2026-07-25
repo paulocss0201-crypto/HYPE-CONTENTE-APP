@@ -100,6 +100,10 @@ export interface ShapeElement extends ElementBase {
   stroke: string;
   strokeWidth: number;
   cornerRadius: number;
+  gradient: boolean;
+  gradientFrom: string;
+  gradientTo: string;
+  gradientDirection: "vertical" | "horizontal";
 }
 
 export interface IconElement extends ElementBase {

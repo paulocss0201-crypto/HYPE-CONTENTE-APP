@@ -90,7 +90,7 @@ export function DesignHub() {
     const template = TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
     const format = DESIGN_FORMATS.find((f) => f.key === formatKey) ?? DESIGN_FORMATS[0];
-    const built = template.layout({ title: "Seu título aqui", body: "Escreva o texto de apoio deste slide.", cta: "Chamada para ação", palette: template.palette, format });
+    const built = template.layout({ title: "Seu título aqui", body: "Escreva o texto de apoio deste slide.", cta: "Chamada para ação", palette: template.palette, fontPairing: template.fontPairing, format });
     const design = createDesign({ name: template.name, format: formatKey, slides: [{ id: `slide_${Date.now()}`, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: built.elements }] });
     navigate(`/design/studio/${design.id}`);
   }

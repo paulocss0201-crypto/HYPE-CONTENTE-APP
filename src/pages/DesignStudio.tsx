@@ -45,6 +45,7 @@ import {
   contrastRatio,
   bestContrastColor,
   MIN_SAFE_CONTRAST,
+  addCarouselChrome,
 } from "@/lib/design-ai";
 import type { DesignTemplate, DesignScoreResult } from "@/lib/design-ai";
 import { validateDesign } from "@/lib/design-ai/validateDesign";
@@ -86,6 +87,7 @@ export function DesignStudio() {
   const [generatingDesign, setGeneratingDesign] = useState(false);
   const [scoreOpen, setScoreOpen] = useState(false);
   const [scoreResult, setScoreResult] = useState<DesignScoreResult | null>(null);
+  const [lastAppliedTemplate, setLastAppliedTemplate] = useState<DesignTemplate | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>("avancado");
   const [gridMode, setGridMode] = useState<GridMode>("none");
@@ -331,9 +333,10 @@ export function DesignStudio() {
   function handleApplyTemplate(template: DesignTemplate) {
     if (!slide) return;
     const texts = extractSlideTexts(slide);
-    const built = template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: template.palette, format });
+    const built = template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: template.palette, fontPairing: template.fontPairing, format });
     setSlideAt(activeSlideIndex, { ...slide, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: withZIndex(built.elements) });
     history.commit();
+    setLastAppliedTemplate(template);
     pushToast("Template aplicado", "success");
   }
 
@@ -359,6 +362,24 @@ export function DesignStudio() {
 
   function handleApplyToAll(kind: "layout" | "color" | "font") {
     if (!slide) return;
+    if (kind === "layout") {
+      if (!lastAppliedTemplate) {
+        pushToast("Aplique um template a este slide primeiro", "error");
+        return;
+      }
+      const template = lastAppliedTemplate;
+      applyAtomic((slides) => {
+        const rebuilt = slides.map((s) => {
+          const texts = extractSlideTexts(s);
+          const built = template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: template.palette, fontPairing: template.fontPairing, format });
+          return { ...s, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: withZIndex(built.elements) };
+        });
+        if (rebuilt.length <= 1) return rebuilt;
+        return rebuilt.map((s, i) => addCarouselChrome(s, i, rebuilt.length, format));
+      });
+      pushToast("Layout aplicado a todos os slides", "success");
+      return;
+    }
     if (kind === "color" || kind === "font") {
       const refText = slide.elements.find((e): e is Extract<DesignElement, { kind: "text" }> => e.kind === "text");
       applyAtomic((slides) =>

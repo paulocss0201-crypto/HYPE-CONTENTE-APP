@@ -9,6 +9,8 @@ import {
 } from "./layouts";
 import type { LayoutInput } from "./layouts";
 import type { DesignPalette } from "./palette";
+import type { FontPairing } from "./typography";
+import { FONT_PAIRINGS } from "./typography";
 
 export type TemplateCategory =
   | "Educativo"
@@ -49,6 +51,7 @@ export interface DesignTemplate {
   name: string;
   layout: (input: LayoutInput) => { background: string; backgroundGradientTo?: string; elements: ReturnType<typeof layoutBoldStatement>["elements"] };
   palette: DesignPalette;
+  fontPairing: FontPairing;
   formats: DesignFormatKey[];
 }
 
@@ -59,7 +62,27 @@ const P = {
   frame: { bg: "#161616", accent: "#ffffff", text: "#f5f5f5" } as DesignPalette,
 };
 
-export const TEMPLATES: DesignTemplate[] = [
+// Maps each category to a curated font pairing so categories that share a
+// layout function (e.g. Futurista/Corporativo/Venda/Lançamento all reuse
+// layoutBoldStatement) still diverge visually instead of rendering identically.
+const CATEGORY_FONT_PAIRING: Record<TemplateCategory, FontPairing> = {
+  Educativo: FONT_PAIRINGS[3], // Editorial + Simples
+  Autoridade: FONT_PAIRINGS[1], // Elegante + Minimalista
+  Venda: FONT_PAIRINGS[0], // Título + Texto
+  Storytelling: FONT_PAIRINGS[3],
+  "Prova social": FONT_PAIRINGS[1],
+  Lista: FONT_PAIRINGS[2], // Tecnológica + Neutra
+  Tutorial: FONT_PAIRINGS[2],
+  Lançamento: FONT_PAIRINGS[0],
+  Oferta: FONT_PAIRINGS[0],
+  Minimalista: FONT_PAIRINGS[4], // Minimalista
+  Corporativo: FONT_PAIRINGS[2],
+  Futurista: FONT_PAIRINGS[2],
+  Elegante: FONT_PAIRINGS[1],
+  Criativo: FONT_PAIRINGS[0],
+};
+
+const RAW_TEMPLATES: Omit<DesignTemplate, "fontPairing">[] = [
   { id: "educativo-split", category: "Educativo", name: "Educativo — Split", layout: layoutSplit, palette: P.soft, formats: ["post-quadrado", "carrossel-quadrado", "story"] },
   { id: "educativo-numerado", category: "Educativo", name: "Educativo — Numerado", layout: layoutNumbered, palette: P.contrast, formats: ["carrossel-quadrado", "carrossel-vertical"] },
   { id: "autoridade-quote", category: "Autoridade", name: "Autoridade — Citação", layout: layoutQuoteCard, palette: P.mono, formats: ["post-quadrado", "post-vertical", "story"] },
@@ -78,6 +101,8 @@ export const TEMPLATES: DesignTemplate[] = [
   { id: "elegante-quote", category: "Elegante", name: "Elegante — Sofisticado", layout: layoutQuoteCard, palette: P.frame, formats: ["post-quadrado", "post-vertical"] },
   { id: "criativo-overlay", category: "Criativo", name: "Criativo — Expressivo", layout: layoutImageOverlay, palette: P.soft, formats: ["story", "capa-reels", "post-vertical"] },
 ];
+
+export const TEMPLATES: DesignTemplate[] = RAW_TEMPLATES.map((t) => ({ ...t, fontPairing: CATEGORY_FONT_PAIRING[t.category] }));
 
 export function templatesForFormat(formatKey: DesignFormatKey): DesignTemplate[] {
   return TEMPLATES.filter((t) => t.formats.includes(formatKey));

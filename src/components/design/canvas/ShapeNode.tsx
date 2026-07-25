@@ -91,6 +91,22 @@ export function ShapeNode({
     );
   }
 
+  if (el.gradient) {
+    return (
+      <Rect
+        {...common}
+        width={el.width}
+        height={el.height}
+        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+        fillLinearGradientEndPoint={el.gradientDirection === "horizontal" ? { x: el.width, y: 0 } : { x: 0, y: el.height }}
+        fillLinearGradientColorStops={[0, el.gradientFrom, 1, el.gradientTo]}
+        stroke={el.strokeWidth > 0 ? el.stroke : undefined}
+        strokeWidth={el.strokeWidth}
+        cornerRadius={el.cornerRadius}
+      />
+    );
+  }
+
   return (
     <Rect
       {...common}
