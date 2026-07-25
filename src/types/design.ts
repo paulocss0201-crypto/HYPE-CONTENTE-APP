@@ -121,6 +121,20 @@ export interface DesignSlide {
   elements: DesignElement[];
 }
 
+// A template the user built by hand in the editor (drag/align/resize) and
+// saved for reuse, as opposed to the built-in code-generated DesignTemplate
+// entries in lib/design-ai/templates.ts.
+export interface UserTemplate {
+  id: string;
+  name: string;
+  format: DesignFormatKey;
+  background: string;
+  backgroundGradientTo?: string;
+  elements: DesignElement[];
+  thumbnail?: string;
+  createdAt: string;
+}
+
 export interface DesignVersion {
   id: string;
   label: string;

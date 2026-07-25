@@ -12,6 +12,7 @@ export { TEMPLATES, TEMPLATE_CATEGORIES, templatesForFormat } from "./templates"
 export type { DesignTemplate, TemplateCategory } from "./templates";
 export * from "./layouts";
 export { extractSlideTexts } from "./slideText";
+export { applyUserTemplate } from "./userTemplates";
 export { newSalt } from "@/lib/ai/helpers";
 export { contrastRatio, bestContrastColor, MIN_SAFE_CONTRAST } from "./contrast";
 export { FONT_CATALOG, FONT_CATEGORY_LABEL, FONT_PAIRINGS, TEXT_STYLE_PRESETS, fontPairingFromSalt, fontPairingFromSlide } from "./typography";

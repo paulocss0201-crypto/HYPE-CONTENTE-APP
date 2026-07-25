@@ -4,7 +4,7 @@ import type Konva from "konva";
 import { useDesignStore } from "@/store/designStore";
 import { useContentStore } from "@/store/contentStore";
 import { useUiStore } from "@/store/uiStore";
-import type { DesignElement, DesignSlide, SaveState } from "@/types/design";
+import type { DesignElement, DesignSlide, SaveState, UserTemplate } from "@/types/design";
 import { DESIGN_FORMATS } from "@/types/design";
 import { DesignCanvas } from "@/components/design/canvas";
 import {
@@ -33,6 +33,7 @@ import {
   redesignSlide,
   newSalt,
   extractSlideTexts,
+  applyUserTemplate,
   emptySlide,
   withZIndex,
   applyTextAIAction,
@@ -65,6 +66,9 @@ export function DesignStudio() {
   const restoreVersion = useDesignStore((s) => s.restoreVersion);
   const duplicateVersion = useDesignStore((s) => s.duplicateVersion);
   const brandKit = useDesignStore((s) => s.brandKit);
+  const userTemplates = useDesignStore((s) => s.userTemplates);
+  const addUserTemplate = useDesignStore((s) => s.addUserTemplate);
+  const removeUserTemplate = useDesignStore((s) => s.removeUserTemplate);
   const contentProject = useContentStore((s) => s.projects.find((p) => p.id === design?.contentProjectId));
   const moveKanbanStage = useContentStore((s) => s.moveKanbanStage);
   const createProject = useContentStore((s) => s.createProject);
@@ -87,7 +91,9 @@ export function DesignStudio() {
   const [generatingDesign, setGeneratingDesign] = useState(false);
   const [scoreOpen, setScoreOpen] = useState(false);
   const [scoreResult, setScoreResult] = useState<DesignScoreResult | null>(null);
-  const [lastAppliedTemplate, setLastAppliedTemplate] = useState<DesignTemplate | null>(null);
+  const [lastAppliedTemplate, setLastAppliedTemplate] = useState<
+    { kind: "builtin"; template: DesignTemplate } | { kind: "user"; template: UserTemplate } | null
+  >(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [editMode, setEditMode] = useState<EditMode>("avancado");
   const [gridMode, setGridMode] = useState<GridMode>("none");
@@ -336,8 +342,37 @@ export function DesignStudio() {
     const built = template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: template.palette, fontPairing: template.fontPairing, format });
     setSlideAt(activeSlideIndex, { ...slide, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: withZIndex(built.elements) });
     history.commit();
-    setLastAppliedTemplate(template);
+    setLastAppliedTemplate({ kind: "builtin", template });
     pushToast("Template aplicado", "success");
+  }
+
+  function handleApplyUserTemplate(template: UserTemplate) {
+    if (!slide) return;
+    const texts = extractSlideTexts(slide);
+    const built = applyUserTemplate(template, texts);
+    setSlideAt(activeSlideIndex, { ...slide, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: withZIndex(built.elements) });
+    history.commit();
+    setLastAppliedTemplate({ kind: "user", template });
+    pushToast("Template aplicado", "success");
+  }
+
+  function handleSaveCurrentSlideAsTemplate(name: string) {
+    if (!slide || !design) return;
+    const thumbnail = stageRef.current?.toDataURL({ pixelRatio: 0.25, mimeType: "image/jpeg", quality: 0.6 });
+    addUserTemplate({
+      name,
+      format: design.format,
+      background: slide.background,
+      backgroundGradientTo: slide.backgroundGradientTo,
+      elements: slide.elements,
+      thumbnail,
+    });
+    pushToast("Template salvo em 'Meus templates'", "success");
+  }
+
+  function handleDeleteUserTemplate(id: string) {
+    removeUserTemplate(id);
+    pushToast("Template removido", "success");
   }
 
   function handleApplyBrandIdentity() {
@@ -367,11 +402,14 @@ export function DesignStudio() {
         pushToast("Aplique um template a este slide primeiro", "error");
         return;
       }
-      const template = lastAppliedTemplate;
+      const applied = lastAppliedTemplate;
       applyAtomic((slides) => {
         const rebuilt = slides.map((s) => {
           const texts = extractSlideTexts(s);
-          const built = template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: template.palette, fontPairing: template.fontPairing, format });
+          const built =
+            applied.kind === "builtin"
+              ? applied.template.layout({ title: texts.title, body: texts.body, cta: texts.cta, palette: applied.template.palette, fontPairing: applied.template.fontPairing, format })
+              : applyUserTemplate(applied.template, texts);
           return { ...s, background: built.background, backgroundGradientTo: built.backgroundGradientTo, elements: withZIndex(built.elements) };
         });
         if (rebuilt.length <= 1) return rebuilt;
@@ -609,7 +647,16 @@ export function DesignStudio() {
 
         {leftPanel && (
           <div className="hidden md:block w-[300px] shrink-0 border-r border-ink-750 bg-ink-950/90 backdrop-blur-md overflow-y-auto">
-            {leftPanel === "templates" && <TemplatesPanel format={design.format} onApply={handleApplyTemplate} />}
+            {leftPanel === "templates" && (
+              <TemplatesPanel
+                format={design.format}
+                onApply={handleApplyTemplate}
+                userTemplates={userTemplates}
+                onApplyUserTemplate={handleApplyUserTemplate}
+                onSaveCurrentAsTemplate={handleSaveCurrentSlideAsTemplate}
+                onDeleteUserTemplate={handleDeleteUserTemplate}
+              />
+            )}
             {leftPanel === "text" && <TextToolPanel onAdd={addElement} />}
             {(leftPanel === "elements" || leftPanel === "shapes" || leftPanel === "icons") && (
               <ElementsToolPanel initialTab={leftPanel === "icons" ? "icons" : "shapes"} onAdd={addElement} />

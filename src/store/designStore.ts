@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { BrandKit, DesignProject, DesignSlide, GeneratedImage, SaveState } from "@/types/design";
+import type { BrandKit, DesignProject, DesignSlide, GeneratedImage, SaveState, UserTemplate } from "@/types/design";
 import { uid } from "@/lib/utils";
 
 const emptyBrandKit: BrandKit = {
@@ -18,9 +18,14 @@ interface DesignState {
   generatedImages: GeneratedImage[];
   uploads: string[];
   saveState: SaveState;
+  userTemplates: UserTemplate[];
 
   addUpload: (dataUrl: string) => void;
   removeUpload: (dataUrl: string) => void;
+
+  addUserTemplate: (input: Omit<UserTemplate, "id" | "createdAt">) => UserTemplate;
+  removeUserTemplate: (id: string) => void;
+  renameUserTemplate: (id: string, name: string) => void;
 
   createDesign: (input: Omit<DesignProject, "id" | "createdAt" | "updatedAt" | "versions">) => DesignProject;
   updateDesign: (id: string, patch: Partial<DesignProject>) => void;
@@ -49,9 +54,18 @@ export const useDesignStore = create<DesignState>()(
       generatedImages: [],
       uploads: [],
       saveState: "idle",
+      userTemplates: [],
 
       addUpload: (dataUrl) => set((s) => ({ uploads: [dataUrl, ...s.uploads] })),
       removeUpload: (dataUrl) => set((s) => ({ uploads: s.uploads.filter((u) => u !== dataUrl) })),
+
+      addUserTemplate: (input) => {
+        const template: UserTemplate = { ...input, id: uid("utpl"), createdAt: new Date().toISOString() };
+        set((s) => ({ userTemplates: [template, ...s.userTemplates] }));
+        return template;
+      },
+      removeUserTemplate: (id) => set((s) => ({ userTemplates: s.userTemplates.filter((t) => t.id !== id) })),
+      renameUserTemplate: (id, name) => set((s) => ({ userTemplates: s.userTemplates.map((t) => (t.id === id ? { ...t, name } : t)) })),
 
       createDesign: (input) => {
         const now = new Date().toISOString();
